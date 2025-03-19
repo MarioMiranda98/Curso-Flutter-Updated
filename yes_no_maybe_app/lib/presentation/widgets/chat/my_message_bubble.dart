@@ -4,7 +4,8 @@ import 'package:yes_no_maybe_app/domain/entities/message_entity.dart';
 class MyMessageBubble extends StatelessWidget {
   final MessageEntity message;
 
-  MyMessageBubble({
+  const MyMessageBubble({
+    super.key,
     required this.message,
   });
 
