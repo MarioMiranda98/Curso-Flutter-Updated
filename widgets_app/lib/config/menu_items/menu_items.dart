@@ -27,4 +27,34 @@ const appMenuItems = <MenuItem>[
     link: '/cards',
     icon: Icons.credit_card,
   ),
+  MenuItem(
+    title: 'Progress Indicators',
+    subtitle: 'Generales y controlados',
+    link: '/progress',
+    icon: Icons.refresh_rounded,
+  ),
+  MenuItem(
+    title: 'Snackbars y dialogs',
+    subtitle: 'Indicadores en pantallas',
+    link: '/snackbar',
+    icon: Icons.info_outline,
+  ),
+  MenuItem(
+    title: 'Animated Container',
+    subtitle: 'Stateful widget animado',
+    link: '/animated',
+    icon: Icons.check_box_outline_blank,
+  ),
+  MenuItem(
+    title: 'UI Controls + Tiles',
+    subtitle: 'Una serie de controles de Flutter',
+    link: '/ui_controls',
+    icon: Icons.car_rental_outlined,
+  ),
+  MenuItem(
+    title: 'Introducción a la aplicación',
+    subtitle: 'Pequeño tutorial introductorio',
+    link: '/app_tutorial',
+    icon: Icons.accessible_rounded,
+  ),
 ];
