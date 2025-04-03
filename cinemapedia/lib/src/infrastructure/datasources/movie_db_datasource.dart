@@ -15,7 +15,64 @@ final dio = Dio(
 class MovieDbDatasource extends MoviesDatasource {
   @override
   Future<List<MovieEntity>> getNowPlaying({int page = 1}) async {
-    final response = await dio.get('/movie/now_playing');
+    final response = await dio.get(
+      '/movie/now_playing',
+      queryParameters: {'page': page},
+    );
+    final movieDbResponse = MovieDbResponseModel.fromJson(response.data);
+
+    final List<MovieEntity> movies =
+        movieDbResponse.results
+            .where((movie) => movie.posterPath != 'no-poster')
+            .map((movie) => MovieMapper.movieDbToEntityMapper(movie))
+            .toList();
+
+    return movies;
+  }
+
+  @override
+  Future<List<MovieEntity>> getPopularMovies({int page = 1}) async {
+    final response = await dio.get(
+      '/movie/popular',
+      queryParameters: {'page': page},
+    );
+
+    final movieDbResponse = MovieDbResponseModel.fromJson(response.data);
+
+    final List<MovieEntity> movies =
+        movieDbResponse.results
+            .where((movie) => movie.posterPath != 'no-poster')
+            .map((movie) => MovieMapper.movieDbToEntityMapper(movie))
+            .toList();
+
+    return movies;
+  }
+
+  @override
+  Future<List<MovieEntity>> getTopRatedMovies({int page = 1}) async {
+    final response = await dio.get(
+      '/movie/top_rated',
+      queryParameters: {'page': page},
+    );
+
+    final movieDbResponse = MovieDbResponseModel.fromJson(response.data);
+
+    final List<MovieEntity> movies =
+        movieDbResponse.results
+            .where((movie) => movie.posterPath != 'no-poster')
+            .map((movie) => MovieMapper.movieDbToEntityMapper(movie))
+            .toList();
+
+    return movies;
+  }
+
+  @override
+  Future<List<MovieEntity>> getUpComingMovies({int page = 1}) async {
+    final response = await dio.get(
+      '/movie/upcoming',
+      queryParameters: {'page': page},
+    );
+
     final movieDbResponse = MovieDbResponseModel.fromJson(response.data);
 
     final List<MovieEntity> movies =
