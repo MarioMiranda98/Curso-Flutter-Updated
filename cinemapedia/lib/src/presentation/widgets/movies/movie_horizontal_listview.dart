@@ -2,6 +2,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:cinemapedia/src/config/helpers/human_formats.dart';
 import 'package:cinemapedia/src/domain/entities/movie_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class MovieHorizontalListview extends StatefulWidget {
   final String? title;
@@ -66,7 +67,10 @@ class _MovieHorizontalListviewState extends State<MovieHorizontalListview> {
               itemBuilder: (context, index) {
                 final MovieEntity movie = widget.movies[index];
 
-                return FadeInRight(child: _Slide(movie: movie));
+                return GestureDetector(
+                  onTap: () => context.push('/movie/${movie.id}'),
+                  child: FadeInRight(child: _Slide(movie: movie)),
+                );
               },
             ),
           ),
