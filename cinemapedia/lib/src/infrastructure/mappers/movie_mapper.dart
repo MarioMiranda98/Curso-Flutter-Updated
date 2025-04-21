@@ -18,8 +18,8 @@ class MovieMapper {
     posterPath:
         movie.posterPath.isNotEmpty
             ? 'https://image.tmdb.org/t/p/w500/${movie.posterPath}'
-            : 'no-poster',
-    releaseDate: movie.releaseDate,
+            : 'https://ih1.redbubble.net/image.4905811447.8675/flat,750x,075,f-pad,750x1000,f8f8f8.jpg',
+    releaseDate: movie.releaseDate ?? DateTime.now(),
     title: movie.title,
     video: movie.video,
     voteAverage: movie.voteAverage,
