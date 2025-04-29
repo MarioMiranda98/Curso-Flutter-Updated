@@ -28,9 +28,6 @@ class CustomAppbar extends ConsumerWidget {
               const Spacer(),
               IconButton(
                 onPressed: () async {
-                  // final movieRepositoryProviderWidget = ref.read(
-                  //   movieRepositoryProvider,
-                  // );
                   final searchQuery = ref.read(searchQueryProvider);
 
                   final movie = await showSearch<MovieEntity?>(
@@ -47,7 +44,7 @@ class CustomAppbar extends ConsumerWidget {
                   );
 
                   if (movie != null && context.mounted) {
-                    context.push('/movie/${movie.id}');
+                    context.push('/home/0/movie/${movie.id}');
                   }
                 },
                 icon: const Icon(Icons.search),
