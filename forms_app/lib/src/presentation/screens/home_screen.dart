@@ -21,6 +21,12 @@ class HomeScreen extends StatelessWidget {
             trailing: const Icon(Icons.arrow_forward_ios_rounded),
             onTap: () => context.push('/bloc-counter'),
           ),
+          ListTile(
+            title: const Text('Nuevo Usuario'),
+            subtitle: const Text('Manjeco de formularios'),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded),
+            onTap: () => context.push('/new-user'),
+          ),
         ],
       ),
     );
