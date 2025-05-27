@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:teslo_app/features/auth/presentation/providers/login_form_provider.dart';
 import 'package:teslo_app/features/auth/presentation/providers/providers.dart';
 import 'package:teslo_app/features/shared/shared.dart';
 
@@ -101,9 +100,9 @@ class _LoginForm extends ConsumerWidget {
             child: CustomFilledButton(
               text: 'Ingresar',
               buttonColor: Colors.black,
-              onPressed: () {
-                ref.read(loginFormProvider.notifier).onFormSubmit();
-              },
+              onPressed: loginForm.isPosting
+                  ? null
+                  : ref.read(loginFormProvider.notifier).onFormSubmit,
             ),
           ),
 

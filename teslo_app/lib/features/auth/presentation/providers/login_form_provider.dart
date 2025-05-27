@@ -46,7 +46,7 @@ class LoginFormState {
 class LoginFormNotifier extends StateNotifier<LoginFormState> {
   LoginFormNotifier({required this.login}) : super(LoginFormState());
 
-  final void Function(String, String) login;
+  final Future<void> Function(String, String) login;
 
   void onEmailChange(String value) {
     final newEmail = Email.dirty(value);
@@ -71,7 +71,11 @@ class LoginFormNotifier extends StateNotifier<LoginFormState> {
 
     if (!state.isValid) return;
 
-    login(state.email.value, state.password.value);
+    state = state.copyWith(isPosting: true);
+
+    await login(state.email.value, state.password.value);
+
+    state = state.copyWith(isPosting: false);
   }
 
   void _touchAllFields() {
