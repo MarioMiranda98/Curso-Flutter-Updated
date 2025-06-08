@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teslo_app/features/products/domain/domain.dart';
@@ -13,31 +15,78 @@ class ProductScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productState = ref.watch(productProvider(productId));
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Editar Producto'),
-        actions: [
-          IconButton(onPressed: () {}, icon: Icon(Icons.camera_alt_outlined)),
-        ],
-      ),
-      body: productState.isLoading
-          ? Center(child: Text(productState.product?.title ?? 'Cargando'))
-          : _ProductView(product: productState.product!),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: Icon(Icons.save_as_outlined),
+    final productFormProviderNotifier = ref.watch(
+      productFormProvider(productState.product!).notifier,
+    );
+
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Editar Producto'),
+          actions: [
+            IconButton(
+              onPressed: () async {
+                final String? photoPath = await CameraGalleryServiceImpl()
+                    .selectPhoto();
+
+                if (photoPath == null) return;
+
+                productFormProviderNotifier.onImageAdded(photoPath);
+              },
+              icon: Icon(Icons.photo_library_outlined),
+            ),
+            IconButton(
+              onPressed: () async {
+                final String? photoPath = await CameraGalleryServiceImpl()
+                    .takePhoto();
+
+                if (photoPath == null) return;
+
+                productFormProviderNotifier.onImageAdded(photoPath);
+              },
+              icon: Icon(Icons.camera_alt_outlined),
+            ),
+          ],
+        ),
+        body: productState.isLoading
+            ? Center(child: Text(productState.product?.title ?? 'Cargando'))
+            : _ProductView(product: productState.product!),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            if (productState.product == null) return;
+
+            ref
+                .read(productFormProvider(productState.product!).notifier)
+                .onFormSubmit()
+                .then((value) {
+                  if (!value) return;
+
+                  if (context.mounted) showSnackbar(context);
+                });
+          },
+          child: Icon(Icons.save_as_outlined),
+        ),
       ),
     );
   }
+
+  void showSnackbar(BuildContext context) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Producto Actualizado')));
+  }
 }
 
-class _ProductView extends StatelessWidget {
+class _ProductView extends ConsumerWidget {
   final ProductEntity product;
 
   const _ProductView({required this.product});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final productForm = ref.watch(productFormProvider(product));
     final textStyles = Theme.of(context).textTheme;
 
     return ListView(
@@ -45,11 +94,13 @@ class _ProductView extends StatelessWidget {
         SizedBox(
           height: 250,
           width: 600,
-          child: _ImageGallery(images: product.images),
+          child: _ImageGallery(images: productForm.images),
         ),
 
         const SizedBox(height: 10),
-        Center(child: Text(product.title, style: textStyles.titleSmall)),
+        Center(
+          child: Text(productForm.title.value, style: textStyles.titleSmall),
+        ),
         const SizedBox(height: 10),
         _ProductInformation(product: product),
       ],
@@ -63,6 +114,8 @@ class _ProductInformation extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final productForm = ref.watch(productFormProvider(product));
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -73,33 +126,59 @@ class _ProductInformation extends ConsumerWidget {
           CustomProductField(
             isTopField: true,
             label: 'Nombre',
-            initialValue: product.title,
+            initialValue: productForm.title.value,
+            onChanged: ref
+                .read(productFormProvider(product).notifier)
+                .onTitleChanged,
+            errorMessage: productForm.title.errorMessage,
           ),
           CustomProductField(
             isTopField: true,
             label: 'Slug',
-            initialValue: product.slug,
+            initialValue: productForm.slug.value,
+            onChanged: ref
+                .read(productFormProvider(product).notifier)
+                .onSlugChanged,
+            errorMessage: productForm.slug.errorMessage,
           ),
           CustomProductField(
             isBottomField: true,
             label: 'Precio',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            initialValue: product.price.toString(),
+            initialValue: productForm.price.value.toString(),
+            onChanged: (value) => ref
+                .read(productFormProvider(product).notifier)
+                .onPriceChanged(double.tryParse(value) ?? -1),
+            errorMessage: productForm.price.errorMessage,
           ),
 
           const SizedBox(height: 15),
           const Text('Extras'),
 
-          _SizeSelector(selectedSizes: product.sizes),
+          _SizeSelector(
+            selectedSizes: productForm.sizes,
+            onSelectedSizesChanged: ref
+                .read(productFormProvider(product).notifier)
+                .onSizeChanged,
+          ),
           const SizedBox(height: 5),
-          _GenderSelector(selectedGender: product.gender),
+          _GenderSelector(
+            selectedGender: productForm.gender,
+            onSelectedGendersChange: ref
+                .read(productFormProvider(product).notifier)
+                .onGenderChanged,
+          ),
 
           const SizedBox(height: 15),
           CustomProductField(
             isTopField: true,
             label: 'Existencias',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            initialValue: product.stock.toString(),
+            initialValue: productForm.inStock.value.toString(),
+            onChanged: (value) => ref
+                .read(productFormProvider(product).notifier)
+                .onStockChanged(int.tryParse(value) ?? -1),
+            errorMessage: productForm.inStock.errorMessage,
           ),
 
           CustomProductField(
@@ -107,6 +186,9 @@ class _ProductInformation extends ConsumerWidget {
             label: 'Descripción',
             keyboardType: TextInputType.multiline,
             initialValue: product.description,
+            onChanged: ref
+                .read(productFormProvider(product).notifier)
+                .onDescriptionChange,
           ),
 
           CustomProductField(
@@ -115,6 +197,9 @@ class _ProductInformation extends ConsumerWidget {
             label: 'Tags (Separados por coma)',
             keyboardType: TextInputType.multiline,
             initialValue: product.tags.join(', '),
+            onChanged: ref
+                .read(productFormProvider(product).notifier)
+                .onTagsChanged,
           ),
 
           const SizedBox(height: 100),
@@ -127,8 +212,12 @@ class _ProductInformation extends ConsumerWidget {
 class _SizeSelector extends StatelessWidget {
   final List<String> selectedSizes;
   final List<String> sizes = const ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+  final void Function(List<String> selectedSizeds) onSelectedSizesChanged;
 
-  const _SizeSelector({required this.selectedSizes});
+  const _SizeSelector({
+    required this.selectedSizes,
+    required this.onSelectedSizesChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +231,9 @@ class _SizeSelector extends StatelessWidget {
       }).toList(),
       selected: Set.from(selectedSizes),
       onSelectionChanged: (newSelection) {
-        print(newSelection);
+        debugPrint(newSelection.toString());
+        FocusScope.of(context).unfocus();
+        onSelectedSizesChanged(List<String>.from(newSelection));
       },
       multiSelectionEnabled: true,
     );
@@ -153,8 +244,12 @@ class _GenderSelector extends StatelessWidget {
   final String selectedGender;
   final List<String> genders = const ['men', 'women', 'kid'];
   final List<IconData> genderIcons = const [Icons.man, Icons.woman, Icons.boy];
+  final void Function(String) onSelectedGendersChange;
 
-  const _GenderSelector({required this.selectedGender});
+  const _GenderSelector({
+    required this.selectedGender,
+    required this.onSelectedGendersChange,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +268,9 @@ class _GenderSelector extends StatelessWidget {
         }).toList(),
         selected: {selectedGender},
         onSelectionChanged: (newSelection) {
-          print(newSelection);
+          debugPrint(newSelection.toString());
+          FocusScope.of(context).unfocus();
+          onSelectedGendersChange(newSelection.first);
         },
       ),
     );
@@ -200,9 +297,14 @@ class _ImageGallery extends StatelessWidget {
               ),
             ]
           : images.map((e) {
-              return ClipRRect(
-                borderRadius: const BorderRadius.all(Radius.circular(20)),
-                child: Image.network(e, fit: BoxFit.cover),
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(20)),
+                  child: e.startsWith('http')
+                      ? Image.network(e, fit: BoxFit.cover)
+                      : Image.file(File(e), fit: BoxFit.cover),
+                ),
               );
             }).toList(),
     );

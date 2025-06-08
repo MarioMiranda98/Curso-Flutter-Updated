@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:formz/formz.dart';
 import 'package:teslo_app/config/constants/environment.dart';
 import 'package:teslo_app/features/products/domain/entities/product_entity.dart';
+import 'package:teslo_app/features/products/presentation/providers/providers.dart';
 import 'package:teslo_app/features/shared/shared.dart';
 
 final productFormProvider = StateNotifierProvider.autoDispose
@@ -9,37 +10,42 @@ final productFormProvider = StateNotifierProvider.autoDispose
       ref,
       product,
     ) {
+      final createUpdateCallback = ref
+          .watch(productsProvider.notifier)
+          .createOrUpdateProduct;
+
       return ProductFormNotifier(
         product: product,
-        onSubmitCallback: (productLike) {},
+        onSubmitCallback: createUpdateCallback,
       );
     });
 
 class ProductFormNotifier extends StateNotifier<ProductFormState> {
-  ProductFormNotifier({this.onSubmitCallback, required ProductEntity product})
-    : super(
-        ProductFormState(
-          id: product.id,
-          title: Title.dirty(product.title),
-          slug: Slug.dirty(product.slug),
-          price: Price.dirty(product.price),
-          sizes: product.sizes,
-          gender: product.gender,
-          inStock: Stock.dirty(product.stock),
-          description: product.description,
-          tags: product.tags.join(', '),
-          images: product.images,
-        ),
-      );
+  ProductFormNotifier({
+    required this.onSubmitCallback,
+    required ProductEntity product,
+  }) : super(
+         ProductFormState(
+           id: product.id,
+           title: Title.dirty(product.title),
+           slug: Slug.dirty(product.slug),
+           price: Price.dirty(product.price),
+           sizes: product.sizes,
+           gender: product.gender,
+           inStock: Stock.dirty(product.stock),
+           description: product.description,
+           tags: product.tags.join(', '),
+           images: product.images,
+         ),
+       );
 
-  final void Function(Map<String, dynamic> productLike)? onSubmitCallback;
+  final Future<bool> Function(Map<String, dynamic> productLike)
+  onSubmitCallback;
 
   Future<bool> onFormSubmit() async {
     _touchEverything();
 
     if (!state.isFormValid) return false;
-
-    if (onSubmitCallback == null) return false;
 
     final productLike = {
       "id": state.id,
@@ -59,7 +65,11 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
           .toList(),
     };
 
-    return true;
+    try {
+      return await onSubmitCallback(productLike);
+    } catch (e) {
+      return false;
+    }
   }
 
   void _touchEverything() {
@@ -73,7 +83,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
     );
   }
 
-  void onTileChanged(String value) {
+  void onTitleChanged(String value) {
     state = state.copyWith(
       title: Title.dirty(value),
       isFormValid: Formz.validate([
@@ -135,6 +145,10 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
 
   void onTagsChanged(String tags) {
     state = state.copyWith(tags: tags);
+  }
+
+  void onImageAdded(String path) {
+    state = state.copyWith(images: [...state.images, path]);
   }
 }
 

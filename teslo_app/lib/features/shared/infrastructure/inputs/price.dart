@@ -15,8 +15,9 @@ class Price extends FormzInput<double, PriceError> {
     if (isValid || isPure) return null;
 
     if (displayError == PriceError.empty) return 'El campo es requerido';
-    if (displayError == PriceError.value)
+    if (displayError == PriceError.value) {
       return 'El precio no puede ser negativo';
+    }
 
     return null;
   }
